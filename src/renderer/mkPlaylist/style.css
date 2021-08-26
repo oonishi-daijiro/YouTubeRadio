@@ -1,0 +1,185 @@
+input,
+button,
+textarea,
+select {
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  -webkit-user-select: none;
+}
+
+#cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10vw;
+  width: 20vw;
+  height: 10vh;
+  background-color: #ffffff;
+  border-radius: 6px;
+  font-weight: 600;
+  -webkit-app-region: no-drag;
+  font-size: 80%;
+}
+
+body {
+  background-color: #e5e5e5;
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-family: "メイリオ", "Meiryo", sans-serif;
+}
+
+#urls {
+  width: 100%;
+  height: 80vh;
+  align-items: center;
+  justify-content: center;
+}
+
+#tableContents {
+  height: 100%;
+  display: block;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+tr {
+  display: block;
+  margin: auto;
+  justify-content: center;
+  margin-bottom: 5vh;
+  width: 90%;
+  height: 10vh;
+  background-color: #ffffff;
+  border-radius: 5px;
+  -webkit-app-region: no-drag;
+}
+
+td {
+  width: 80%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  -webkit-app-region: no-drag;
+  margin: auto;
+}
+
+.urlArea {
+  width: 100vh;
+  justify-content: center;
+  margin: auto;
+  height: 6vh;
+  border: none;
+  padding: 10px 15px;
+  transition: all 300ms 0s ease;
+  background-color: #ffffff;
+  padding: 0;
+  -webkit-app-region: no-drag;
+  margin: auto;
+}
+
+#submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10vw;
+  width: 20vw;
+  height: 10vh;
+  border-radius: 6px;
+  background-color: #1a7df7;
+  -webkit-app-region: no-drag;
+  font-size: 80%;
+  font-weight: 600;
+}
+
+#scroller {
+  width: 100%;
+  height: 70vh;
+  overflow-y: scroll;
+  margin: 10px;
+  margin-top: 7vh;
+}
+
+::-webkit-scrollbar {
+  -webkit-app-region: no-drag;
+  width: 2.5px;
+  height: 2.5px;
+}
+
+::-webkit-scrollbar-thumb {
+  -webkit-app-region: no-drag;
+  background-color: #585858;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-corner {
+  -webkit-app-region: no-drag;
+  display: none;
+}
+
+#addUrlButton {
+  width: 100%;
+  height: auto;
+  position: absolute;
+  z-index: 4;
+  bottom: 23vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#addIco {
+  position: absolute;
+  display: block;
+  margin: auto;
+  z-index: 4;
+  color: #1a7df7;
+  font-size: 150%;
+  transition: all 300ms 0s ease;
+}
+
+#addIco {
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+#addIco:active {
+  transform: scale(1.8);
+}
+
+#interface {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+  -webkit-user-select: none;
+}
+
+#interface:hover {
+  cursor: pointer;
+}
+
+.removeId {
+  color: #585858;
+  font-size: 80%;
+  width: auto;
+  height: auto;
+  margin-right: 2vw;
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}

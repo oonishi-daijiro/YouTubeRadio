@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Youtube radio</title>
+
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://www.youtube.com; font-src 'self' https://use.fontawesome.com; child-src 'self' http://www.youtube.com" />
+
+
   <link rel="stylesheet" href="./style.css">
   <link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet">
-  <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://www.youtube.com; font-src 'self' https://use.fontawesome.com; child-src 'self' http://www.youtube.com" />
 </head>
 <body>
   <div id="windowInterface">
@@ -19,7 +22,7 @@
   </div>
   <div id="hide"></div>
   <div id="interface">
-    <i class="fas fa-angle-double-right" id="back_10sec"></i>
+    <i class="fas fa-angle-double-right" id="previousVideo"></i>
     <i class="fas fa-pause" id="pause"></i>
     <i class="fas fa-angle-double-right" id="nextVideo"></i>
   </div>

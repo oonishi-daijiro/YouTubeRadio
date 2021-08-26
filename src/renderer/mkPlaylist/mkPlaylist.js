@@ -1,30 +1,47 @@
-const close = document.getElementById('cancel')
+const cancelButton = document.getElementById('cancel')
 const ipcRenderer = window.api.ipcRenderer
 const urlTable = document.getElementById('urls')
 const url = window.api.url // <=require('url')
+const domParser = new DOMParser()
 
-let firstId = '' // if value of first input text tag, value of first tag will be here
-window.onload = () => { // when window has opened, get data from config.json
-  const tableContent = document.getElementById('urls')
-  ipcRenderer.send('getUrlSettings', '')
-  ipcRenderer.on('replyUrlList', (event, args) => {
-    if (!args.list.length) {
-      addTableContent()
+function getIdlistFromStore(callback) {
+  (async () => {
+    const idList = await new Promise((resolve, reject) => {
+      ipcRenderer.getVideoIDandTitle('')
+      ipcRenderer.on('replyUrlList', (event, args) => {
+        resolve(args.list)
+      })
+    })
+    return idList
+  })().then((replyData) => {
+    callback(replyData)
+  })
+}
+
+window.onload = () => { // when this window has opened, get data from config.json
+  const tableDOM = document.getElementById('urls')
+  getIdlistFromStore((list) => {
+    if (list.length === 0) { // if the length of list is 0
+      addURLinputRow()
       return
     }
-    args.list.forEach(element => {
-      addTableContent()
+    list.forEach(element => {
+      addURLinputRow()
     })
-    let rows = Array.from(tableContent.rows)
-    let i = 0
-    rows.forEach(element => {
-      element.childNodes[0].childNodes[1].value = 'https://www.youtube.com/watch?v=' + args.list[i]
-      i++
+    const rows = Array.from(tableDOM.rows)
+    rows.forEach((element, index) => {
+      if (list[index] === null) {
+        return
+      }
+      element.childNodes[0].childNodes[1].value = 'https://www.youtube.com/watch?v=' + list[index]
     })
   })
 }
-close.addEventListener('click', (event) => {
-  window.api.ipcRenderer.send('closeMkplay', 'canceled')
+
+
+
+cancelButton.addEventListener('click', (event) => {
+  window.api.ipcRenderer.closeMkplay('canceled')
   const tableContent = document.getElementById('tableContents').rows
   Array.from(tableContent).forEach(element => {
     if (tableContent.length === 1) { // dom tbody element
@@ -39,46 +56,37 @@ close.addEventListener('click', (event) => {
 const submit = document.getElementById('submit')
 
 function parseUrls(urlList) {
-  let parsedList = []
-  urlList.forEach(element => {
-    let parsedUrl = url.parse(element, true)
-    if (parsedUrl.hostname === 'www.youtube.com' && parsedUrl.query.v) {
-      parsedList[parsedList.length] = parsedUrl.query.v
-    }
+  const parsedList = urlList.filter(i => {
+    const u = url.parse(i, true)
+    return u.hostname === 'www.youtube.com' && u.query.v.length === 11 && i !== ""
+  }).map((i) => {
+    const u = url.parse(i, true)
+    return u.query.v
   })
   return parsedList
 }
+
 submit.addEventListener('click', () => {
-  let IdPlaylist = parseUrls(grtUrlByTable())
-  if (!IdPlaylist.length && firstId.length) {
-    IdPlaylist[0] = firstId
-  }
-  ipcRenderer.setParsedUrl('setParsedIdlist', IdPlaylist)
-  ipcRenderer.send('submitUrlList', IdPlaylist) //send id list to main process
-  const tableContent = document.getElementById('tableContents').rows
-  Array.from(tableContent).forEach(element => {
-    if (element.firstChild.childNodes[1].value === '') {
-      element.remove()
-    }
-  })
+  const idList = parseUrls(grtUrlByTable())
+  ipcRenderer.storeIdList(idList)
+  ipcRenderer.submitIdListToPlayer(idList) //send list of ID to main process
 })
 
 const addUrlButton = document.getElementById('addIco')
 
 addUrlButton.addEventListener('click', () => {
-  addTableContent()
+  addURLinputRow()
 })
 
-function addTableContent() {
+function addURLinputRow() {
   const tableContent = document.getElementById('tableContents')
-  let tr = document.createElement('tr')
-  let td = document.createElement('td')
-  let textArea = document.createElement('input')
+  const tr = document.createElement('tr')
+  const td = document.createElement('td')
+  const textArea = document.createElement('input')
   const i = document.createElement('i')
   i.className = 'fas fa-times removeId'
   i.addEventListener('click', (event) => {
-    if (event.target.parentNode.parentNode.parentNode.childNodes.length - 1 === 1) { // dom tbody element
-      firstId = url.parse(event.target.parentNode.childNodes[1].value, true).query.v
+    if (event.target.parentNode.parentNode.parentNode.childNodes.length === 2) { // dom tbody element
       event.target.parentNode.childNodes[1].value = ''
       return
     }
@@ -94,14 +102,40 @@ function addTableContent() {
 }
 
 function grtUrlByTable() {
-  let urlList = []
+  const urlList = []
   const tableContent = document.getElementById('urls')
-  let rows = Array.from(tableContent.rows)
+  const rows = Array.from(tableContent.rows)
   rows.forEach(element => {
-    if (element.childNodes[0].childNodes[1].value === '') {
-      return
-    }
-    urlList[urlList.length] = element.childNodes[0].childNodes[1].value
+    urlList.push(element.childNodes[0].childNodes[1].value)
   })
   return urlList
 }
+
+function getHtmlTieleOfYotubeFromHtml(idList) {
+  const titleList = []
+  idList.forEach((content) => {
+    ipcRenderer.requestYTvideoHtml(content)
+  })
+}
+
+function getTitleOnYoutube(youtubeVideoID, callback) {
+  (async () => {
+    const response = await fetch(`https://www.youtube.com/watch?v=${youtubeVideoID}`)
+    if (response.ok) {
+      const responseBody = response.text()
+      return responseBody
+    } else {
+      throw new Error(response.statusText)
+    }
+  })().then(responseText => {
+    callback(responseText)
+  }).catch(error => {
+    console.log(error);
+  })
+}
+
+getTitleOnYoutube('adGhT_-JbZI', (resp) => {
+  const dom = domParser.parseFromString(resp, 'text/html')
+  const titleText = Array.from(dom.title).splice(0, dom.title.length - 10).join('')
+  console.log(titleText);
+})

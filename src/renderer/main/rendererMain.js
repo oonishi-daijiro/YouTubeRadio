@@ -1,18 +1,12 @@
-let tag = document.createElement('script');
+const tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
-let firstScriptTag = document.getElementsByTagName('script')[0];
+const firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 document.getElementById('pause').className = 'fas fa-play'
 const ipcRenderer = window.api.ipcRenderer
 let player; //youtube iframe api instance will be here
-let playingStat = {
-  moved: false,
-  listIndex: 0,
-  invalidReported: false
-}
-let videoIdList = []
 
-function onYouTubeIframeAPIReady() {
+function onYouTubeIframeAPIReady() { // when youtube iframe api get ready, this function will call
   player = new YT.Player('player', {
     height: '300',
     width: '288',
@@ -24,72 +18,134 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-ipcRenderer.on('replyUrlList', (event, args) => {
-  if (!args.list.length) {
-    return
-  }
-  videoIdList = args.list
-  ipcRenderer.send('setParsedIdlist', videoIdList)
-  player.loadPlaylist(videoIdList)
-  window.alert(";;")
-  player.seekTo(48)
-  player.playVideo()
-  player.setLoop(true)
-})
-
-
-function YTonPlayerError(event) {
-  if (event.data === 150) {
-    window.api.ipcRenderer.send('playingError', {
-      data: event.data,
-      videoUrl: player.getVideoUrl()
+function getIdlistFromStore(callback) {
+  (async () => {
+    const idList = await new Promise((resolve, reject) => {
+      ipcRenderer.getVideoIDandTitle('')
+      ipcRenderer.on('replyUrlList', (event, args) => {
+        resolve(args.list)
+      })
     })
-  }
+    return idList
+  })().then((replyData) => {
+    callback(replyData)
+  })
 }
 
 function YTonPlayerReady(event) {
-  ipcRenderer.send('getUrlSettings', '') // get list of id from json
-  player.setVolume(50)
+  getIdlistFromStore((replyedIdList) => {
+    if (replyedIdList.length === 0) return
+    player.loadPlaylist({
+      listType: "playlist",
+      playlist: replyedIdList
+    })
+  })
 }
+
+
+function removeInvalidIDandStoreAndApplyNewPlaylist() {
+  const currentList = player.getPlaylist()
+  const currentIndex = player.getPlaylistIndex()
+  currentList.splice(currentIndex, 1)
+  player.loadPlaylist({
+    listType: "playlist",
+    playlist: currentList
+  })
+  player.setLoop(true)
+  if (currentList === undefined) currentList = []
+  ipcRenderer.storeIdList(currentList)
+}
+
+
+
+
+function YTonPlayerError(event) {
+  const currentIndex = player.getPlaylistIndex()
+  if (event.data === 150) {
+    ipcRenderer.sendErrorOfPlaying({
+      data: event.data,
+      videoUrl: player.getVideoUrl(),
+      errorBody: "動画の所有者が、埋め込み動画プレーヤーでの再生を許可していないため再生できません\nクリックで確認"
+    })
+    removeInvalidIDandStoreAndApplyNewPlaylist()
+  }
+}
+
+//if the current index is 0 and applies a new playlist that has unallowed video play on iframe at first index, the youtube iframe API shows an error and can not use any of it. the way to fix them is to remove the invalid IDs and apply again.
+
+ipcRenderer.on('applyNewPlaylist', (event, args) => {
+  const videoIdList = args.filter(() => true)
+  console.log(videoIdList);
+  const currentVideoIDList = player.getPlaylist()
+  if (currentVideoIDList === null) {
+    player.loadPlaylist({
+      listType: "playlist",
+      playlist: videoIdList
+    })
+    player.setLoop(true)
+    return
+  }
+  let currentIndex = player.getPlaylistIndex()
+  const currentID = currentVideoIDList[currentIndex]
+  let currentTime = player.getCurrentTime()
+
+  if (currentID !== currentID) {
+    currentTime = 0
+  }
+
+  soundBars.forEach(element => {
+    element.style.animationPlayState = 'running'
+  })
+
+  player.loadPlaylist({
+    listType: "playlist",
+    playlist: videoIdList,
+    index: currentIndex,
+    startSeconds: currentTime,
+  })
+  player.setLoop(true)
+  player.seekTo(currentTime, true)
+  player.playVideo()
+})
 
 function YTonStateChange(event) {}
 
-let soundBars = []
+const soundBars = []
 const bars = document.getElementsByClassName('bars')
 Array.from(bars).forEach((e) => {
-  soundBars[soundBars.length] = e
+  soundBars.push(e)
 })
 
 const getUrl = document.getElementById('getUrl')
 getUrl.addEventListener('click', () => {
-  ipcRenderer.send('newWindow', '')
+  ipcRenderer.openMkPlaylistWindow()
 })
 
-let pause = document.getElementById('pause')
+const pauseButton = document.getElementById('pause')
 
-pause.addEventListener('click', () => {
-  if (!videoIdList.length) {
+pauseButton.addEventListener('click', () => {
+  if (!player.getPlaylist().length) {
     return
   }
-  pause.className === "fas fa-pause" ? (() => {
+  pauseButton.className === "fas fa-pause" ? (() => {
     player.pauseVideo()
-    pause.className = "fas fa-play"
+    pauseButton.className = "fas fa-play"
     soundBars.forEach(element => {
       element.style.animationPlayState = 'paused'
     });
   })() : (() => {
     player.playVideo()
-    pause.className = "fas fa-pause"
+    pauseButton.className = "fas fa-pause"
     soundBars.forEach(element => {
       element.style.animationPlayState = 'running'
     });
   })()
 }, false)
 
-const back_10sec = document.getElementById('back_10sec')
+const previousVideo = document.getElementById('previousVideo')
 
-back_10sec.addEventListener('click', () => {
-  if (!videoIdList.length || playingStat.moved) {
+previousVideo.addEventListener('click', () => {
+  if (!player.getPlaylist().length) {
     return
   } else {
     player.previousVideo()
@@ -99,14 +155,14 @@ back_10sec.addEventListener('click', () => {
 const nextVideo = document.getElementById('nextVideo')
 
 nextVideo.addEventListener('click', () => {
-  if (!videoIdList.length || playingStat.moved) {
+  if (!player.getPlaylist().length) {
     return
   } else {
     player.nextVideo()
   }
 }, false)
 
-let volume = document.getElementById('volume')
+const volume = document.getElementById('volume')
 
 volume.addEventListener('click', () => {
   volume.style.display = 'none'
@@ -116,74 +172,60 @@ volume.addEventListener('click', () => {
   field.fillRect(0, volume_num, canvas.width, canvas.height);
 }, false)
 
-let canvas = document.getElementById('canvas')
+const canvas = document.getElementById('canvas')
 const field = canvas.getContext('2d')
 
-canvas.addEventListener('mousemove', (event) => {
-  if (event.which === 1) {
-    let y = event.offsetY
-    field.fillStyle = '#444444';
-    field.clearRect(0, 0, canvas.width, y + 50);
-    field.fillRect(0, y, canvas.width, canvas.height);
-    player.setVolume(100 - y * 2)
-    y >= 50 ? (() => {
-      volume.className = 'fas fa-volume-mute'
-    })() : (() => {
-      volume.className = 'fas fa-volume-up'
-    })()
-    canvas.addEventListener('mouseup', () => {
-      setTimeout(() => {
-        canvas.style.display = 'none'
-        volume.style.display = 'block'
-      }, 500);
-    }, false)
-    canvas.addEventListener('mouseout', () => {
-      setTimeout(() => {
-        canvas.style.display = 'none'
-        volume.style.display = 'block'
-      }, 500);
-    }, false)
-  }
-}, false);
+function setVolumeFromOfsetY(y) {
+  field.fillStyle = '#444444';
+  field.clearRect(0, 0, canvas.width, y + 50);
+  field.fillRect(0, y, canvas.width, canvas.height);
+  player.setVolume(100 - y * 2)
+  y >= 50 ? (() => {
+    volume.className = 'fas fa-volume-mute'
+  })() : (() => {
+    volume.className = 'fas fa-volume-up'
+  })()
+}
 
 canvas.addEventListener('click', (event) => {
   if (event.which === 1) {
-    let y = event.offsetY
-    field.fillStyle = '#444444';
-    field.clearRect(0, 0, canvas.width, y + 50);
-    field.fillRect(0, y, canvas.width, canvas.height);
-    player.setVolume(100 - y * 2)
-    y >= 50 ? (() => {
-      volume.className = 'fas fa-volume-mute'
-    })() : (() => {
-      volume.className = 'fas fa-volume-up'
-    })()
-    canvas.addEventListener('mouseup', () => {
-      setTimeout(() => {
-        canvas.style.display = 'none'
-        volume.style.display = 'block'
-      }, 500);
-      canvas.addEventListener('mouseout', () => {
-        setTimeout(() => {
-          canvas.style.display = 'none'
-          volume.style.display = 'block'
-        }, 500);
-      }, false)
-    }, false)
+    setVolumeFromOfsetY(event.offsetY)
   }
 }, false);
+
+canvas.addEventListener('mousemove', (event) => {
+  if (event.which === 1) {
+    setVolumeFromOfsetY(event.offsetY)
+  }
+}, false);
+
+canvas.addEventListener('mouseup', () => {
+  setTimeout(() => {
+    canvas.style.display = 'none'
+    volume.style.display = 'block'
+  }, 500);
+}, false)
+
+canvas.addEventListener('mouseout', () => {
+  setTimeout(() => {
+    canvas.style.display = 'none'
+    volume.style.display = 'block'
+  }, 500);
+}, false)
+
+
 
 // renderer event process
 
 ipcRenderer.on('pause', (e) => {
-  pause.className = "fas fa-play"
+  pauseButton.className = "fas fa-play"
   soundBars.forEach(element => {
     element.style.animationPlayState = "paused"
   });
 })
 
 ipcRenderer.on('playing', (e) => {
-  pause.className = "fas fa-pause"
+  pauseButton.className = "fas fa-pause"
   soundBars.forEach(element => {
     element.style.animationPlayState = 'running'
   });
@@ -192,71 +234,11 @@ ipcRenderer.on('playing', (e) => {
 const close = document.getElementById('close_button')
 
 close.addEventListener('click', () => {
-  ipcRenderer.send('close', 'close')
+  ipcRenderer.closeWindow('close')
 }, false)
 
 const minimize = document.getElementById('minimize')
 
 minimize.addEventListener('click', () => {
-  ipcRenderer.send('minimize', 'minimize')
+  ipcRenderer.minimizeWindow('minimize')
 }, false)
-
-ipcRenderer.on('messageShowed', (event, args) => {
-  playingStat.moved = true
-  const playingIndex = player.getPlaylistIndex()
-  videoIdList.splice(playingIndex, 1)
-  ipcRenderer.send('setParsedIdlist', videoIdList)
-  setTimeout(() => {
-    player.loadPlaylist(videoIdList)
-    player.playVideoAt(playingIndex)
-    player.setLoop(true)
-    playingStat.moved = false
-  }, 6000);
-})
-
-ipcRenderer.on('urlList', (event, args) => {
-  playingStat.listIndex = player.getPlaylistIndex()
-  const nowId = videoIdList[playingStat.listIndex]
-  videoIdList = []
-  let currentTime = player.getCurrentTime()
-  for (const prop in args) {
-    videoIdList[videoIdList.length] = args[prop]
-  }
-  videoIdList.forEach((element, index) => {
-    if (!(element.length === 11)) {
-      videoIdList.splice(index, 1)
-    }
-  })
-  if (videoIdList.length === 0) {
-    return
-  }
-  if (!(nowId === videoIdList[playingStat.listIndex])) {
-    currentTime = 0
-  }
-  if (playingStat.listIndex > videoIdList.length - 1) {
-    playingStat.listIndex = videoIdList.length - 1
-  }
-  soundBars.forEach(element => {
-    element.style.animationPlayState = 'running'
-  });
-  if (videoIdList.length === 1) {
-    player.loadPlaylist({
-      listType: "playlist",
-      playlist: videoIdList,
-      index: playingStat.listIndex,
-      startSeconds: currentTime
-    })
-    player.playVideo()
-    player.setLoop(true)
-    return
-  }
-  ipcRenderer.send('setParsedIdlist', videoIdList)
-  player.loadPlaylist({
-    listType: "playlist",
-    playlist: videoIdList,
-    index: playingStat.listIndex,
-    startSeconds: currentTime
-  })
-  player.playVideo()
-  player.setLoop(true)
-})
