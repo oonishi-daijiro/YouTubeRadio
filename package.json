@@ -1,6 +1,6 @@
 {
   "name": "youtube_radio",
-  "version": "1.5.7a",
+  "version": "1.6a",
   "main": "./main.js",
   "scripts": {
     "run": "electron ."
