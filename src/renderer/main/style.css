@@ -183,8 +183,7 @@ body {
   z-index: 3;
   background-color: #eeeeee;
   border: 1px solid #444444;
-  /* margin: 10px; */
-  /* background-color: aquamarine; */
+  cursor: pointer;
 }
 
 

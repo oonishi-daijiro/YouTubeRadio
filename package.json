@@ -1,6 +1,6 @@
 {
   "name": "youtube_radio",
-  "version": "1.6a",
+  "version": "1.6.1a",
   "main": "./main.js",
   "scripts": {
     "run": "electron ."
@@ -8,15 +8,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "electron-store": "^5.1.1"
+    "diff": "^5.0.0",
+    "electron-store": "^5.1.1",
+    "node": "^16.6.1"
   },
   "devDependencies": {
-    "electron": "^8.5.5",
-    "electron-builder": "^22.12.1",
+    "electron": "^13.2.3",
+    "electron-builder": "^22.13.1",
     "electron-package": "^0.1.0",
-    "electron-packager": "^14.2.1",
-    "electron-store": "^5.1.1",
-    "yt-player": "^3.4.3"
+    "electron-store": "^5.1.1"
   },
   "description": "",
   "build": {

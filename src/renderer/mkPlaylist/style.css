@@ -14,6 +14,12 @@ select {
   -webkit-user-select: none;
 }
 
+html{
+  width:500px;
+  height: 366px;
+  -webkit-app-region: drag;
+}
+
 #cancel {
   display: flex;
   align-items: center;
@@ -58,18 +64,21 @@ tr {
   display: block;
   margin: auto;
   justify-content: center;
-  margin-bottom: 5vh;
+  padding-bottom: 3vh;
+  padding-top: 3vh;
   width: 90%;
   height: 10vh;
-  background-color: #ffffff;
+  background-color: #e5e5e5;
   border-radius: 5px;
   -webkit-app-region: no-drag;
 }
 
 td {
-  width: 80%;
+  width: 100%;
   height: 100%;
   display: flex;
+  background-color: #ffffff;
+  border-radius: 7px;
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -177,9 +186,14 @@ td {
 .removeId {
   color: #585858;
   font-size: 80%;
+  margin-left: 7%;
   width: auto;
   height: auto;
   margin-right: 2vw;
   -webkit-app-region: no-drag;
   cursor: pointer;
+}
+
+.youtubeTitleRow{
+  display: block;
 }

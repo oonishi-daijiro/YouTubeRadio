@@ -18,12 +18,12 @@ function onYouTubeIframeAPIReady() { // when youtube iframe api get ready, this 
   });
 }
 
-function getIdlistFromStore(callback) {
+function getIDlistAndTitleList(callback) {
   (async () => {
     const idList = await new Promise((resolve, reject) => {
       ipcRenderer.getVideoIDandTitle('')
       ipcRenderer.on('replyUrlList', (event, args) => {
-        resolve(args.list)
+        resolve(args);
       })
     })
     return idList
@@ -33,12 +33,14 @@ function getIdlistFromStore(callback) {
 }
 
 function YTonPlayerReady(event) {
-  getIdlistFromStore((replyedIdList) => {
-    if (replyedIdList.length === 0) return
+  getIDlistAndTitleList((list) => {
+    const idListArray = Array.from(list.IDlist)
+    if (idListArray.length === 0) return
     player.loadPlaylist({
       listType: "playlist",
-      playlist: replyedIdList
+      playlist: idListArray
     })
+    player.setVolume(50)
   })
 }
 
@@ -52,6 +54,7 @@ function removeInvalidIDandStoreAndApplyNewPlaylist() {
     playlist: currentList
   })
   player.setLoop(true)
+  player.setVolume(50)
   if (currentList === undefined) currentList = []
   ipcRenderer.storeIdList(currentList)
 }
@@ -75,7 +78,6 @@ function YTonPlayerError(event) {
 
 ipcRenderer.on('applyNewPlaylist', (event, args) => {
   const videoIdList = args.filter(() => true)
-  console.log(videoIdList);
   const currentVideoIDList = player.getPlaylist()
   if (currentVideoIDList === null) {
     player.loadPlaylist({
@@ -89,7 +91,7 @@ ipcRenderer.on('applyNewPlaylist', (event, args) => {
   const currentID = currentVideoIDList[currentIndex]
   let currentTime = player.getCurrentTime()
 
-  if (currentID !== currentID) {
+  if (currentID !== videoIdList[currentIndex]) {
     currentTime = 0
   }
 
@@ -105,7 +107,7 @@ ipcRenderer.on('applyNewPlaylist', (event, args) => {
   })
   player.setLoop(true)
   player.seekTo(currentTime, true)
-  player.playVideo()
+  player.setVolume(50)
 })
 
 function YTonStateChange(event) {}
@@ -234,11 +236,12 @@ ipcRenderer.on('playing', (e) => {
 const close = document.getElementById('close_button')
 
 close.addEventListener('click', () => {
-  ipcRenderer.closeWindow('close')
+  console.log("close clicked");
+  ipcRenderer.closeWindow()
 }, false)
 
 const minimize = document.getElementById('minimize')
 
 minimize.addEventListener('click', () => {
-  ipcRenderer.minimizeWindow('minimize')
+  ipcRenderer.minimizeWindow()
 }, false)

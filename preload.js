@@ -20,11 +20,11 @@ contextBridge.exposeInMainWorld(
       getVideoIDandTitle: (data) => {
         ipcRenderer.send('getVideoIDandTitle', data)
       },
-      closeMkplay: (data) => {
-        ipcRenderer.send('closeMkplay', data);
+      closeMkplay: () => {
+        ipcRenderer.send('closeMkplay');
       },
-      closeWindow: (data) => {
-        ipcRenderer.send('close', data)
+      closeWindow: () => {
+        ipcRenderer.send('close')
       },
       minimizeWindow: (data) => {
         ipcRenderer.send('minimize', data)

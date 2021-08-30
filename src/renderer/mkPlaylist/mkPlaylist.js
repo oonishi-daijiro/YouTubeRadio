@@ -4,15 +4,15 @@ const urlTable = document.getElementById('urls')
 const url = window.api.url // <=require('url')
 const domParser = new DOMParser()
 
-function getIdlistFromStore(callback) {
+function getIDlistAndTitleList(callback) {
   (async () => {
-    const idList = await new Promise((resolve, reject) => {
+    const list = await new Promise((resolve, reject) => {
       ipcRenderer.getVideoIDandTitle('')
       ipcRenderer.on('replyUrlList', (event, args) => {
-        resolve(args.list)
+        resolve(args)
       })
     })
-    return idList
+    return list
   })().then((replyData) => {
     callback(replyData)
   })
@@ -20,20 +20,25 @@ function getIdlistFromStore(callback) {
 
 window.onload = () => { // when this window has opened, get data from config.json
   const tableDOM = document.getElementById('urls')
-  getIdlistFromStore((list) => {
-    if (list.length === 0) { // if the length of list is 0
+  getIDlistAndTitleList((list) => {
+    const idListArray = Array.from(list.IDlist)
+    if (idListArray.length === 0) {
       addURLinputRow()
       return
     }
-    list.forEach(element => {
+    idListArray.forEach(element => {
       addURLinputRow()
     })
     const rows = Array.from(tableDOM.rows)
     rows.forEach((element, index) => {
-      if (list[index] === null) {
+      getTitleOnYoutube(idListArray[index], (titleText) => {
+        // element.childNodes[0].childNodes[1].value = titleText;
+        console.log(titleText);
+      })
+      if (idListArray[index] === null) {
         return
       }
-      element.childNodes[0].childNodes[1].value = 'https://www.youtube.com/watch?v=' + list[index]
+      element.childNodes[0].childNodes[1].value = `https://www.youtube.com/watch?v=${idListArray[index]}`
     })
   })
 }
@@ -41,7 +46,7 @@ window.onload = () => { // when this window has opened, get data from config.jso
 
 
 cancelButton.addEventListener('click', (event) => {
-  window.api.ipcRenderer.closeMkplay('canceled')
+  ipcRenderer.closeMkplay('canceled')
   const tableContent = document.getElementById('tableContents').rows
   Array.from(tableContent).forEach(element => {
     if (tableContent.length === 1) { // dom tbody element
@@ -67,15 +72,22 @@ function parseUrls(urlList) {
 }
 
 submit.addEventListener('click', () => {
-  const idList = parseUrls(grtUrlByTable())
-  ipcRenderer.storeIdList(idList)
-  ipcRenderer.submitIdListToPlayer(idList) //send list of ID to main process
+  const newIDList = parseUrls(grtUrlByTable())
+  newIDList.forEach(element => {
+    getTitleOnYoutube(element, (titleText) => {
+      console.log(titleText);
+    })
+  });
+  ipcRenderer.storeIdList(newIDList)
+  ipcRenderer.submitIdListToPlayer(newIDList) //send list of ID to main process
 })
 
 const addUrlButton = document.getElementById('addIco')
 
 addUrlButton.addEventListener('click', () => {
-  addURLinputRow()
+  const table = addURLinputRow()
+  const leastRowPosition = table.childNodes[table.childNodes.length - 1].offsetTop
+  document.getElementById('scroller').scrollTo(0, leastRowPosition)
 })
 
 function addURLinputRow() {
@@ -95,10 +107,16 @@ function addURLinputRow() {
   td.appendChild(i)
   textArea.className = 'urlArea'
   textArea.placeholder = 'YouTube URL here'
+  tr.addEventListener('click', e => {
+    const trList = Array.from(tableContent.childNodes)
+    const index = trList.indexOf(tr)
+    console.log(index);
+  })
   tableContent
     .appendChild(tr)
     .appendChild(td)
     .appendChild(textArea)
+  return tableContent
 }
 
 function grtUrlByTable() {
@@ -111,13 +129,6 @@ function grtUrlByTable() {
   return urlList
 }
 
-function getHtmlTieleOfYotubeFromHtml(idList) {
-  const titleList = []
-  idList.forEach((content) => {
-    ipcRenderer.requestYTvideoHtml(content)
-  })
-}
-
 function getTitleOnYoutube(youtubeVideoID, callback) {
   (async () => {
     const response = await fetch(`https://www.youtube.com/watch?v=${youtubeVideoID}`)
@@ -128,14 +139,10 @@ function getTitleOnYoutube(youtubeVideoID, callback) {
       throw new Error(response.statusText)
     }
   })().then(responseText => {
-    callback(responseText)
+    const dom = domParser.parseFromString(responseText, 'text/html')
+    const titleText = Array.from(dom.title).splice(0, dom.title.length - 10).join('')
+    callback(titleText)
   }).catch(error => {
     console.log(error);
   })
 }
-
-getTitleOnYoutube('adGhT_-JbZI', (resp) => {
-  const dom = domParser.parseFromString(resp, 'text/html')
-  const titleText = Array.from(dom.title).splice(0, dom.title.length - 10).join('')
-  console.log(titleText);
-})
