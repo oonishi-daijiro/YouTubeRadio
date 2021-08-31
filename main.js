@@ -15,7 +15,8 @@ app.on('ready', () => {
     store.set('urlList', {
       list: []
     })
-  } else if (!store.get('videoTitleList')) {
+  }
+  if (!store.get('videoTitleList')) {
     store.set('videoTitleList', {
       list: []
     })
@@ -103,14 +104,14 @@ ipcMain.on('playingError', (event, args) => {
 
 ipcMain.on('submitIdListToPlayer', (event, args) => { // should receive from make playlist window
   mainWindow.send('applyNewPlaylist', args)
-  mkPlaylistWindow.close()
+  mkPlaylistWindow.hide()
 })
 
 ipcMain.on('getVideoIDandTitle', (event, args) => {
   const IDlist = store.get('urlList', {
     list: []
   })
-  const titleList = store.get('titleList', {
+  const titleList = store.get('videoTitleList', {
     list: []
   })
   event.sender.send('replyUrlList', {
@@ -121,6 +122,12 @@ ipcMain.on('getVideoIDandTitle', (event, args) => {
 
 ipcMain.on('storeIdList', (event, args) => {
   store.set('urlList', {
+    list: args
+  })
+})
+
+ipcMain.on('storeTitleList', (event, args) => {
+  store.set('videoTitleList', {
     list: args
   })
 })

@@ -3,12 +3,14 @@ const ipcRenderer = window.api.ipcRenderer
 const urlTable = document.getElementById('urls')
 const url = window.api.url // <=require('url')
 const domParser = new DOMParser()
+const diffArrays = window.api.getDiffFromArrays
 
-function getIDlistAndTitleList(callback) {
+
+function getListOfIDandTitleFromStore(callback) {
   (async () => {
     const list = await new Promise((resolve, reject) => {
       ipcRenderer.getVideoIDandTitle('')
-      ipcRenderer.on('replyUrlList', (event, args) => {
+      ipcRenderer.once('replyUrlList', (event, args) => {
         resolve(args)
       })
     })
@@ -20,7 +22,7 @@ function getIDlistAndTitleList(callback) {
 
 window.onload = () => { // when this window has opened, get data from config.json
   const tableDOM = document.getElementById('urls')
-  getIDlistAndTitleList((list) => {
+  getListOfIDandTitleFromStore((list) => {
     const idListArray = Array.from(list.IDlist)
     if (idListArray.length === 0) {
       addURLinputRow()
@@ -46,7 +48,7 @@ window.onload = () => { // when this window has opened, get data from config.jso
 
 
 cancelButton.addEventListener('click', (event) => {
-  ipcRenderer.closeMkplay('canceled')
+  ipcRenderer.closeMkplay()
   const tableContent = document.getElementById('tableContents').rows
   Array.from(tableContent).forEach(element => {
     if (tableContent.length === 1) { // dom tbody element
@@ -58,7 +60,6 @@ cancelButton.addEventListener('click', (event) => {
   })
 })
 
-const submit = document.getElementById('submit')
 
 function parseUrls(urlList) {
   const parsedList = urlList.filter(i => {
@@ -71,21 +72,73 @@ function parseUrls(urlList) {
   return parsedList
 }
 
+const submit = document.getElementById('submit')
+
 submit.addEventListener('click', () => {
   const newIDList = parseUrls(grtUrlByTable())
-  newIDList.forEach(element => {
-    getTitleOnYoutube(element, (titleText) => {
-      console.log(titleText);
+  getListOfIDandTitleFromStore(list => {
+    if (newIDList.length === 0) {
+      getTitleOnYoutube(list.IDlist[0], title => {
+        ipcRenderer.storeTitleList([title])
+      })
+      ipcRenderer.closeMkplay()
+      return
+    }
+    const difference = diffArrays(list.IDlist, newIDList)
+    parseTitleList(difference, list.titleList).then(titleList => {
+      console.log(titleList);
+      ipcRenderer.storeTitleList(titleList)
+      ipcRenderer.closeMkplay()
     })
-  });
+  })
   ipcRenderer.storeIdList(newIDList)
-  ipcRenderer.submitIdListToPlayer(newIDList) //send list of ID to main process
+  submitIDs(newIDList)
 })
+
+
+async function parseTitleList(diffData, currentTitileList) {
+  const titles = currentTitileList.filter(() => true)
+  const getYTtitleAsync = (ID) => {
+    return new Promise((resolve, reject) => {
+      getTitleOnYoutube(ID, (title) => {
+        resolve(title)
+      })
+    })
+  }
+  let index = 0
+  for (e of diffData) {
+    if (e.added) {
+      for (s of e.value) {
+        const title = await getYTtitleAsync(s)
+        titles.splice(index, 0, title)
+        index++
+      }
+    } else if (e.removed) {
+      e.value.forEach(s => {
+        titles.splice(index, 1)
+      })
+    } else {
+      e.value.forEach(s => {
+        index++
+      })
+    }
+  }
+  return titles
+}
+
+
+function submitIDs(newIDList) {
+  ipcRenderer.submitIdListToPlayer(newIDList)
+}
+
 
 const addUrlButton = document.getElementById('addIco')
 
 addUrlButton.addEventListener('click', () => {
   const table = addURLinputRow()
+  if (table.childNodes.length <= 5) {
+    return
+  }
   const leastRowPosition = table.childNodes[table.childNodes.length - 1].offsetTop
   document.getElementById('scroller').scrollTo(0, leastRowPosition)
 })
@@ -98,7 +151,7 @@ function addURLinputRow() {
   const i = document.createElement('i')
   i.className = 'fas fa-times removeId'
   i.addEventListener('click', (event) => {
-    if (event.target.parentNode.parentNode.parentNode.childNodes.length === 2) { // dom tbody element
+    if (event.target.parentNode.parentNode.parentNode.childNodes.length === 2) {
       event.target.parentNode.childNodes[1].value = ''
       return
     }
@@ -110,7 +163,6 @@ function addURLinputRow() {
   tr.addEventListener('click', e => {
     const trList = Array.from(tableContent.childNodes)
     const index = trList.indexOf(tr)
-    console.log(index);
   })
   tableContent
     .appendChild(tr)
@@ -143,6 +195,6 @@ function getTitleOnYoutube(youtubeVideoID, callback) {
     const titleText = Array.from(dom.title).splice(0, dom.title.length - 10).join('')
     callback(titleText)
   }).catch(error => {
-    console.log(error);
+    console.error(error)
   })
 }

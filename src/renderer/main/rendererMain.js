@@ -18,7 +18,7 @@ function onYouTubeIframeAPIReady() { // when youtube iframe api get ready, this 
   });
 }
 
-function getIDlistAndTitleList(callback) {
+function getListOfIDandTitleFromStore(callback) {
   (async () => {
     const idList = await new Promise((resolve, reject) => {
       ipcRenderer.getVideoIDandTitle('')
@@ -33,7 +33,7 @@ function getIDlistAndTitleList(callback) {
 }
 
 function YTonPlayerReady(event) {
-  getIDlistAndTitleList((list) => {
+  getListOfIDandTitleFromStore((list) => {
     const idListArray = Array.from(list.IDlist)
     if (idListArray.length === 0) return
     player.loadPlaylist({
@@ -48,15 +48,24 @@ function YTonPlayerReady(event) {
 function removeInvalidIDandStoreAndApplyNewPlaylist() {
   const currentList = player.getPlaylist()
   const currentIndex = player.getPlaylistIndex()
+  if (currentIndex > currentList.length - 1) {
+    currentIndex = 0
+  }
   currentList.splice(currentIndex, 1)
   player.loadPlaylist({
     listType: "playlist",
-    playlist: currentList
+    playlist: currentList,
+    index: currentIndex
   })
   player.setLoop(true)
   player.setVolume(50)
   if (currentList === undefined) currentList = []
   ipcRenderer.storeIdList(currentList)
+  getListOfIDandTitleFromStore(list => {
+    const currentTitleList = list.titleList
+    console.log(currentTitleList.splice(currentIndex, 1));
+    ipcRenderer.storeTitleList(currentTitleList)
+  })
 }
 
 
@@ -79,12 +88,20 @@ function YTonPlayerError(event) {
 ipcRenderer.on('applyNewPlaylist', (event, args) => {
   const videoIdList = args.filter(() => true)
   const currentVideoIDList = player.getPlaylist()
-  if (currentVideoIDList === null) {
+  if (currentVideoIDList === null) { // when the player didn't set the playlist
     player.loadPlaylist({
       listType: "playlist",
       playlist: videoIdList
     })
-    player.setLoop(true)
+    return
+  } else if (videoIdList.length === 0) { // when applyed the playlist that has no value []
+    const firstID = currentVideoIDList.splice(0, 1)
+    player.loadPlaylist({
+      listType: "playlist",
+      playlist: firstID
+    })
+    console.log(player.getPlaylist());
+    ipcRenderer.storeIdList(firstID)
     return
   }
   let currentIndex = player.getPlaylistIndex()
@@ -147,21 +164,13 @@ pauseButton.addEventListener('click', () => {
 const previousVideo = document.getElementById('previousVideo')
 
 previousVideo.addEventListener('click', () => {
-  if (!player.getPlaylist().length) {
-    return
-  } else {
-    player.previousVideo()
-  }
+  player.previousVideo()
 })
 
 const nextVideo = document.getElementById('nextVideo')
 
 nextVideo.addEventListener('click', () => {
-  if (!player.getPlaylist().length) {
-    return
-  } else {
-    player.nextVideo()
-  }
+  player.nextVideo()
 }, false)
 
 const volume = document.getElementById('volume')

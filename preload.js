@@ -1,12 +1,16 @@
 const ipcRenderer = require('electron').ipcRenderer
 const contextBridge = require('electron').contextBridge
 const url = require('url')
+const diff = require('diff')
 
 contextBridge.exposeInMainWorld(
   "api", {
     ipcRenderer: {
       on: (channel, func) => {
         ipcRenderer.on(channel, (event, ...args) => func(event, ...args));
+      },
+      once: (channel, func) => {
+        ipcRenderer.once(channel, (event, ...args) => func(event, ...args));
       },
       send: (channel, data) => {
         ipcRenderer.send(channel, data);
@@ -37,8 +41,12 @@ contextBridge.exposeInMainWorld(
       },
       sendErrorOfPlaying: (data) => {
         ipcRenderer.send('playingError', data);
+      },
+      storeTitleList: (data) => {
+        ipcRenderer.send('storeTitleList', data)
       }
     },
-    url: url
+    url: url,
+    getDiffFromArrays: diff.diffArrays
   }
 )
