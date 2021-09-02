@@ -1,8 +1,8 @@
 const diff = require('diff');
 
-export function getLeastTitleList(newIDlist, currentIDlist, currentTitleList) {
-  const difference = diff.diffArrays(newIDlist, currentIDlist)
-  const titleList = parseTitleList(difference, currentTitleList)
+module.exports = async (newIDlist, currentIDlist, currentTitleList) => {
+  const difference = diff.diffArrays(currentIDlist, newIDlist)
+  const titleList = await parseTitleList(difference, currentTitleList)
   return titleList
 }
 
@@ -37,9 +37,13 @@ async function parseTitleList(diffData, currentTitileList) {
   for (e of diffData) {
     if (e.added) {
       for (s of e.value) {
-        const title = await getYTtitleAsync(s)
-        titles.splice(index, 0, title)
-        index++
+        try {
+          const title = await getYTtitleAsync(s)
+          titles.splice(index, 0, title)
+          index++
+        } catch (error) {
+          console.log(error);
+        }
       }
     } else if (e.removed) {
       e.value.forEach(s => {

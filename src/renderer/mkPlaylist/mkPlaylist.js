@@ -4,7 +4,7 @@ const urlTable = document.getElementById('urls')
 const url = window.api.url // <=require('url')
 const domParser = new DOMParser()
 const diffArrays = window.api.getDiffFromArrays
-
+const getHtmlOnYouTube = window.api.getHtmlOnYouTube
 
 function getListOfIDandTitleFromStore(callback) {
   (async () => {
@@ -33,10 +33,6 @@ window.onload = () => { // when this window has opened, get data from config.jso
     })
     const rows = Array.from(tableDOM.rows)
     rows.forEach((element, index) => {
-      getTitleOnYoutube(idListArray[index], (titleText) => {
-        // element.childNodes[0].childNodes[1].value = titleText;
-        console.log(titleText);
-      })
       if (idListArray[index] === null) {
         return
       }
@@ -84,48 +80,11 @@ submit.addEventListener('click', () => {
       ipcRenderer.closeMkplay()
       return
     }
-    const difference = diffArrays(list.IDlist, newIDList)
-    parseTitleList(difference, list.titleList).then(titleList => {
-      console.log(titleList);
-      ipcRenderer.storeTitleList(titleList)
-      ipcRenderer.closeMkplay()
-    })
+    ipcRenderer.getTitleAndStore(newIDList)
+    submitIDs(newIDList)
+    ipcRenderer.closeMkplay()
   })
-  ipcRenderer.storeIdList(newIDList)
-  submitIDs(newIDList)
 })
-
-
-async function parseTitleList(diffData, currentTitileList) {
-  const titles = currentTitileList.filter(() => true)
-  const getYTtitleAsync = (ID) => {
-    return new Promise((resolve, reject) => {
-      getTitleOnYoutube(ID, (title) => {
-        resolve(title)
-      })
-    })
-  }
-  let index = 0
-  for (e of diffData) {
-    if (e.added) {
-      for (s of e.value) {
-        const title = await getYTtitleAsync(s)
-        titles.splice(index, 0, title)
-        index++
-      }
-    } else if (e.removed) {
-      e.value.forEach(s => {
-        titles.splice(index, 1)
-      })
-    } else {
-      e.value.forEach(s => {
-        index++
-      })
-    }
-  }
-  return titles
-}
-
 
 function submitIDs(newIDList) {
   ipcRenderer.submitIdListToPlayer(newIDList)
@@ -179,22 +138,4 @@ function grtUrlByTable() {
     urlList.push(element.childNodes[0].childNodes[1].value)
   })
   return urlList
-}
-
-function getTitleOnYoutube(youtubeVideoID, callback) {
-  (async () => {
-    const response = await fetch(`https://www.youtube.com/watch?v=${youtubeVideoID}`)
-    if (response.ok) {
-      const responseBody = response.text()
-      return responseBody
-    } else {
-      throw new Error(response.statusText)
-    }
-  })().then(responseText => {
-    const dom = domParser.parseFromString(responseText, 'text/html')
-    const titleText = Array.from(dom.title).splice(0, dom.title.length - 10).join('')
-    callback(titleText)
-  }).catch(error => {
-    console.error(error)
-  })
 }

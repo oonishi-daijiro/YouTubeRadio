@@ -9,6 +9,7 @@ const store = new electronStore({
 })
 let mainWindow = null
 let mkPlaylistWindow = null
+const getLeastTitleList = require('./src/getHtmlTitle/main.js');
 
 app.on('ready', () => {
   if (!store.get('urlList')) {
@@ -129,5 +130,23 @@ ipcMain.on('storeIdList', (event, args) => {
 ipcMain.on('storeTitleList', (event, args) => {
   store.set('videoTitleList', {
     list: args
+  })
+})
+
+ipcMain.on('getTitleAndStore', (event, args) => {
+  const currentIDlist = store.get('urlList', {
+    list: []
+  })
+  const currentTitleList = store.get('videoTitleList', {
+    list: []
+  })
+  const titleList = getLeastTitleList(args, currentIDlist.list, currentTitleList.list)
+  titleList.then(list => {
+    store.set('videoTitleList', {
+      list: list
+    })
+    store.set('urlList', {
+      list: args
+    })
   })
 })
