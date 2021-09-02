@@ -41,8 +41,6 @@ window.onload = () => { // when this window has opened, get data from config.jso
   })
 }
 
-
-
 cancelButton.addEventListener('click', (event) => {
   ipcRenderer.closeMkplay()
   const tableContent = document.getElementById('tableContents').rows
