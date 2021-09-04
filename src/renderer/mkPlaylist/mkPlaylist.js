@@ -2,8 +2,6 @@ const cancelButton = document.getElementById('cancel')
 const ipcRenderer = window.api.ipcRenderer
 const urlTable = document.getElementById('urls')
 const url = window.api.url // <=require('url')
-const domParser = new DOMParser()
-const diffArrays = window.api.getDiffFromArrays
 const getTitleOnYoutube = window.api.getTitleOnYoutube
 
 function getListOfIDandTitleFromStore(callback) {
@@ -22,6 +20,7 @@ function getListOfIDandTitleFromStore(callback) {
 
 window.onload = () => { // when this window has opened, get data from config.json
   const tableDOM = document.getElementById('urls')
+  addTitleDisplay('', tableDOM)
   getListOfIDandTitleFromStore((list) => {
     const idListArray = Array.from(list.IDlist)
     if (idListArray.length === 0) {
@@ -41,8 +40,12 @@ window.onload = () => { // when this window has opened, get data from config.jso
   })
 }
 
-function addTitleDisplay(titleList, inputURLTabale) {}
-
+function addTitleDisplay(titleList, inputURLTabale) {
+  const rowList = Array.from(inputURLTabale.childNodes).map(e => {
+    return e.firstChild()
+  })
+  console.log(rowList);
+}
 
 const submit = document.getElementById('submit')
 
