@@ -233,7 +233,7 @@ body {
 }
 
 #windowInterface:hover{
-  filter: drop-shadow(0 0 4px #63656B);
+  filter: drop-shadow(0 0 4px rgb(0, 0, 0,0.4));
 }
 #playerBackground{
   position: absolute;

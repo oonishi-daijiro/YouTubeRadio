@@ -35,7 +35,7 @@ html{
 }
 
 body {
-  background-color: #e5e5e5;
+  background-color: #eeeeee;
   -webkit-app-region: drag;
   display: flex;
   align-items: center;
@@ -68,7 +68,7 @@ tr {
   padding-top: 3vh;
   width: 90%;
   height: 10vh;
-  background-color: #e5e5e5;
+  background-color: #eeeeee;
   border-radius: 5px;
   -webkit-app-region: no-drag;
 }

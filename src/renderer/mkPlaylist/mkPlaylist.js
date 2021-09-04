@@ -20,7 +20,6 @@ function getListOfIDandTitleFromStore(callback) {
 
 window.onload = () => { // when this window has opened, get data from config.json
   const tableDOM = document.getElementById('urls')
-  addTitleDisplay('', tableDOM)
   getListOfIDandTitleFromStore((list) => {
     const idListArray = Array.from(list.IDlist)
     if (idListArray.length === 0) {
@@ -37,14 +36,45 @@ window.onload = () => { // when this window has opened, get data from config.jso
       }
       element.childNodes[0].childNodes[1].value = `https://www.youtube.com/watch?v=${idListArray[index]}`
     })
+    addTitleDisplay(list.titleList, tableDOM)
   })
 }
 
+function htmlspecialchars(str) {
+  return (str + '').replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '\"')
+    .replace(/&#39;/g, '\'')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
 function addTitleDisplay(titleList, inputURLTabale) {
-  const rowList = Array.from(inputURLTabale.childNodes).map(e => {
-    return e.firstChild()
+  Array.from(inputURLTabale.rows).forEach((e, index) => {
+    e.firstChild.style.display = "none"
+    const td = document.createElement('td')
+    const textArea = document.createElement('input')
+    const i = document.createElement('i')
+    textArea.value = htmlspecialchars(titleList[index])
+    textArea.style.fontStyle = 'italic'
+    textArea.style.color = '#585858'
+    if (titleList[index] === undefined) {
+      textArea.value = 'Loading....'
+    }
+    i.className = 'fas fa-times removeId'
+    i.addEventListener('click', (event) => {
+      removeRow(event)
+    })
+    td.appendChild(i)
+    textArea.className = 'urlArea'
+    td.appendChild(textArea)
+    e.appendChild(td)
+    textArea.addEventListener('focus', (event) => {
+      event.stopPropagation()
+      event.target.parentNode.style.display = 'none'
+      event.target.parentNode.previousSibling.style.display = 'flex'
+      event.target.parentNode.previousSibling.childNodes[1].focus()
+    })
   })
-  console.log(rowList);
 }
 
 const submit = document.getElementById('submit')
@@ -112,18 +142,18 @@ function addURLinputRow() {
   const i = document.createElement('i')
   i.className = 'fas fa-times removeId'
   i.addEventListener('click', (event) => {
-    if (event.target.parentNode.parentNode.parentNode.childNodes.length === 2) {
-      event.target.parentNode.childNodes[1].value = ''
-      return
-    }
-    event.target.parentNode.parentNode.remove()
+    removeRow(event)
   })
   td.appendChild(i)
   textArea.className = 'urlArea'
   textArea.placeholder = 'YouTube URL'
-  tr.addEventListener('click', e => {
-    const trList = Array.from(tableContent.childNodes)
-    const index = trList.indexOf(tr)
+  textArea.addEventListener('focusout', (event) => {
+    if (event.target.parentNode.nextSibling === null) {
+      return
+    }
+    event.stopPropagation()
+    event.target.parentNode.style.display = 'none'
+    event.target.parentNode.nextSibling.style.display = 'flex'
   })
   tableContent
     .appendChild(tr)
@@ -140,4 +170,13 @@ function getURLFromTable() {
     urlList.push(element.childNodes[0].childNodes[1].value)
   })
   return urlList
+}
+
+function removeRow(event) {
+  if (event.target.parentNode.parentNode.parentNode.childNodes.length === 2) {
+    event.target.parentNode.parentNode.remove()
+    addURLinputRow()
+    return
+  }
+  event.target.parentNode.parentNode.remove()
 }

@@ -1,7 +1,7 @@
 const ipcRenderer = require('electron').ipcRenderer
 const contextBridge = require('electron').contextBridge
 const url = require('url')
-const diff = require('diff')
+const getTitleOnYouTube = require('./src/getHtmlTitle/main').getTitleOnYoutube
 
 contextBridge.exposeInMainWorld(
   "api", {
@@ -44,9 +44,14 @@ contextBridge.exposeInMainWorld(
       },
       storeTitleList: (data) => {
         ipcRenderer.send('storeTitleList', data)
+      },
+      getTitleAndStore: (data) => {
+        ipcRenderer.send('getTitleAndStore', data)
       }
     },
     url: url,
-    getDiffFromArrays: diff.diffArrays
+    getTitleOnYoutube: (ID, callback) => {
+      getTitleOnYouTube(ID, callback)
+    }
   }
 )

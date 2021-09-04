@@ -6,6 +6,8 @@ module.exports = async (newIDlist, currentIDlist, currentTitleList) => {
   return titleList
 }
 
+module.exports.getTitleOnYoutube = getTitleOnYoutube
+
 function getTitleOnYoutube(youtubeVideoID, callback) {
   (async () => {
     try {

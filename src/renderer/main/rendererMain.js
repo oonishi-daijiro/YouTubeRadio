@@ -22,7 +22,7 @@ function getListOfIDandTitleFromStore(callback) {
   (async () => {
     const idList = await new Promise((resolve, reject) => {
       ipcRenderer.getVideoIDandTitle('')
-      ipcRenderer.on('replyUrlList', (event, args) => {
+      ipcRenderer.once('replyUrlList', (event, args) => {
         resolve(args);
       })
     })
@@ -41,6 +41,7 @@ function YTonPlayerReady(event) {
       playlist: idListArray
     })
     player.setVolume(50)
+    player.setLoop(true)
   })
 }
 
@@ -63,7 +64,6 @@ function removeInvalidIDandStoreAndApplyNewPlaylist() {
   ipcRenderer.storeIdList(currentList)
   getListOfIDandTitleFromStore(list => {
     const currentTitleList = list.titleList
-    console.log(currentTitleList.splice(currentIndex, 1));
     ipcRenderer.storeTitleList(currentTitleList)
   })
 }
@@ -72,7 +72,6 @@ function removeInvalidIDandStoreAndApplyNewPlaylist() {
 
 
 function YTonPlayerError(event) {
-  const currentIndex = player.getPlaylistIndex()
   if (event.data === 150) {
     ipcRenderer.sendErrorOfPlaying({
       data: event.data,
@@ -95,13 +94,11 @@ ipcRenderer.on('applyNewPlaylist', (event, args) => {
     })
     return
   } else if (videoIdList.length === 0) { // when applyed the playlist that has no value []
-    const firstID = currentVideoIDList.splice(0, 1)
     player.loadPlaylist({
       listType: "playlist",
-      playlist: firstID
+      playlist: []
     })
-    console.log(player.getPlaylist());
-    ipcRenderer.storeIdList(firstID)
+    ipcRenderer.storeIdList([])
     return
   }
   let currentIndex = player.getPlaylistIndex()
@@ -143,9 +140,6 @@ getUrl.addEventListener('click', () => {
 const pauseButton = document.getElementById('pause')
 
 pauseButton.addEventListener('click', () => {
-  if (!player.getPlaylist().length) {
-    return
-  }
   pauseButton.className === "fas fa-pause" ? (() => {
     player.pauseVideo()
     pauseButton.className = "fas fa-play"
@@ -164,12 +158,18 @@ pauseButton.addEventListener('click', () => {
 const previousVideo = document.getElementById('previousVideo')
 
 previousVideo.addEventListener('click', () => {
+  if (!player.getPlaylist().length) {
+    return
+  }
   player.previousVideo()
 })
 
 const nextVideo = document.getElementById('nextVideo')
 
 nextVideo.addEventListener('click', () => {
+  if (!player.getPlaylist().length) {
+    return
+  }
   player.nextVideo()
 }, false)
 
@@ -245,7 +245,6 @@ ipcRenderer.on('playing', (e) => {
 const close = document.getElementById('close_button')
 
 close.addEventListener('click', () => {
-  console.log("close clicked");
   ipcRenderer.closeWindow()
 }, false)
 

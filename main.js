@@ -44,7 +44,6 @@ app.on('ready', () => {
   contents.on('media-started-playing', (event, args) => {
     contents.send('playing')
   })
-  mainWindow.openDevTools()
   mainWindow.loadFile('./src/renderer/main/renderer.html')
   ipcMain.on('close', () => {
     app.exit()
@@ -75,13 +74,16 @@ ipcMain.on('openMkPlaylistWindow', (event, args) => {
       useContentSize: true
     })
     mkPlaylistWindow.setMenu(null)
-    mkPlaylistWindow.openDevTools()
     mkPlaylistWindow.loadFile('./src/renderer/mkPlaylist/index.html')
     mkPlaylistWindow.on('close', () => {
       mkPlaylistWindow = null
     })
   }
 })
+
+function isConnectedAtInternet() {
+
+}
 
 ipcMain.on('closeMkplay', (event, args) => {
   mkPlaylistWindow.close()
@@ -105,7 +107,6 @@ ipcMain.on('playingError', (event, args) => {
 
 ipcMain.on('submitIdListToPlayer', (event, args) => { // should receive from make playlist window
   mainWindow.send('applyNewPlaylist', args)
-  mkPlaylistWindow.hide()
 })
 
 ipcMain.on('getVideoIDandTitle', (event, args) => {
@@ -144,9 +145,6 @@ ipcMain.on('getTitleAndStore', (event, args) => {
   titleList.then(list => {
     store.set('videoTitleList', {
       list: list
-    })
-    store.set('urlList', {
-      list: args
     })
   })
 })
