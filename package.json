@@ -8,7 +8,7 @@
   "author": "OnishiDaijiro",
   "license": "ISC",
   "dependencies": {
-    "ansi-regex": "^6.0.1",
+    "ansi-regex": "^5.0.1",
     "diff": "^5.0.0",
     "electron-store": "^5.1.1",
     "node": "^16.6.1"
