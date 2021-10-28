@@ -48,8 +48,10 @@ function htmlspecialchars(str) {
     .replace(/&gt;/g, ">");
 }
 
+
 function addTitleDisplay(titleList, inputURLTabale) {
   Array.from(inputURLTabale.rows).forEach((e, index) => {
+    e.className = 'urlRow'
     e.firstChild.style.display = "none"
     const td = document.createElement('td')
     const textArea = document.createElement('input')
@@ -66,7 +68,9 @@ function addTitleDisplay(titleList, inputURLTabale) {
     })
     td.appendChild(i)
     textArea.className = 'urlArea'
+    textArea.style.userSelect = 'none'
     td.appendChild(textArea)
+    td.className='urlDisplayRow'
     e.appendChild(td)
     textArea.addEventListener('focus', (event) => {
       event.stopPropagation()
@@ -74,6 +78,9 @@ function addTitleDisplay(titleList, inputURLTabale) {
       event.target.parentNode.previousSibling.style.display = 'flex'
       event.target.parentNode.previousSibling.childNodes[1].focus()
     })
+    const jumpVideoButton = document.createElement('i')
+    jumpVideoButton.className = 'fas fa-play jumpVideoButton'
+    td.appendChild(jumpVideoButton)
   })
 }
 

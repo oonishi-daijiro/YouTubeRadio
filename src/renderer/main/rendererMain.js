@@ -45,7 +45,6 @@ function YTonPlayerReady(event) {
   })
 }
 
-
 function removeInvalidIDandStoreAndApplyNewPlaylist() {
   const currentList = player.getPlaylist()
   const currentIndex = player.getPlaylistIndex()
@@ -63,7 +62,8 @@ function removeInvalidIDandStoreAndApplyNewPlaylist() {
   if (currentList === undefined) currentList = []
   ipcRenderer.storeIdList(currentList)
   getListOfIDandTitleFromStore(list => {
-    const currentTitleList = list.titleList
+    const currentTitleList = Array.from(list.titleList)
+    currentTitleList.splice(currentIndex, 1)
     ipcRenderer.storeTitleList(currentTitleList)
   })
 }

@@ -11,7 +11,7 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  -webkit-user-select: none;
+  user-select: none;
 }
 
 html{
@@ -84,6 +84,7 @@ td {
   text-align: center;
   -webkit-app-region: no-drag;
   margin: auto;
+  pointer-events: all;
 }
 
 .urlArea {
@@ -176,7 +177,7 @@ td {
   justify-content: center;
   width: 100%;
   height: auto;
-  -webkit-user-select: none;
+  user-select: none;
 }
 
 #interface:hover {
@@ -197,3 +198,26 @@ td {
 .youtubeTitleRow{
   display: block;
 }
+
+.jumpVideoButton{
+  display: none;
+  color: #585858;
+  font-size: 75%;
+  margin-left: 7%;
+  width: auto;
+  height: auto;
+  margin-right: 2vw;
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+
+.urlArea::after:hover+.jumpVideoButton {
+  color: #1a7df7;
+}
+
+.urlDisplayRow::after{
+  width: 100%;
+  height: 100%;
+}
+
+

@@ -37,6 +37,7 @@ app.on('ready', () => {
     useContentSize: true
   })
   mainWindow.setIcon(__dirname + "/src/icon/icon.ico")
+  mainWindow.openDevTools()
   const contents = mainWindow.webContents
   contents.on('media-paused', (e, a) => {
     contents.send('pause')
@@ -44,6 +45,7 @@ app.on('ready', () => {
   contents.on('media-started-playing', (event, args) => {
     contents.send('playing')
   })
+  mainWindow.openDevTools()
   mainWindow.loadFile('./src/renderer/main/renderer.html')
   ipcMain.on('close', () => {
     app.exit()
@@ -74,16 +76,13 @@ ipcMain.on('openMkPlaylistWindow', (event, args) => {
       useContentSize: true
     })
     mkPlaylistWindow.setMenu(null)
+    mkPlaylistWindow.openDevTools()
     mkPlaylistWindow.loadFile('./src/renderer/mkPlaylist/index.html')
     mkPlaylistWindow.on('close', () => {
       mkPlaylistWindow = null
     })
   }
 })
-
-function isConnectedAtInternet() {
-
-}
 
 ipcMain.on('closeMkplay', (event, args) => {
   mkPlaylistWindow.close()
