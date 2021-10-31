@@ -36,6 +36,7 @@ app.on('ready', () => {
     resizable: false,
     useContentSize: true
   })
+  mainWindow.openDevTools()
   mainWindow.setIcon(__dirname + "/src/icon/icon.ico")
   const contents = mainWindow.webContents
   contents.on('media-paused', (e, a) => {

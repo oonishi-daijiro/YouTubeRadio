@@ -1,41 +1,30 @@
 html {
-  width: 293px;
-  height: 240px;
-  margin-top: -67px;
-  margin-left: auto;
-  margin-right: auto;
   -webkit-app-region: drag;
 }
 
 body {
-  width: auto;
-  height: 100%;
+  margin: 0px;
   overflow-x: hidden;
-  margin: auto;
-  background-color: #eeeeee;
+  display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 ::-webkit-scrollbar {
   display: none;
 }
 
-#hide {
-  margin: auto;
-  width: 100%;
-  position: absolute;
-  z-index: 1;
-  height: 2px;
-  background-color: #eeeeee;
-  top: 0px;
-}
-
-#block {
+#player_container{
   display: flex;
   align-items: center;
-  width: auto;
-  height: 300px;
-  margin-left: 2px;
+  justify-content: center;
+margin-top: 2px;
+border-radius: 7px 7px 0px 0px;
+overflow: hidden;
+}
+
+#player{
+  margin-top: -69px;
 }
 
 #interface {
