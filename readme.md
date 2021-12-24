@@ -4,12 +4,24 @@
 
 # Screenshot
 
-![Screenshot](image/screenshot.jpg)
+<img src="image/screenshot.jpg" alt="Screenshot" style="zoom: 67%;" />
 
 # Installation
 
-・[Download Installer 1.6.1 for windows10](https://github.com/oonishi-daijiro/YouTubeRadio/blob/master/dist/youtube_radio%20Setup%201.6.1-a%20for%20windows10.exe?raw=true)
+npmとgitを使ってインストールします。
 
+```
+git clone https://github.com/oonishi-daijiro/YouTubeRadio
+```
 
+```
+npm install
+```
 
-・[Download Installer 1.6.1 for windows11](https://github.com/oonishi-daijiro/YouTubeRadio/blob/master/dist/youtube_radio%20Setup%201.6.1-a%20for%20windows11.exe?raw=true)
+```
+npx electron-builder
+```
+
+```
+./dist 内のインストーラーを実行することでインストールできます
+```
