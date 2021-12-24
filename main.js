@@ -36,7 +36,7 @@ app.on('ready', () => {
     resizable: false,
     useContentSize: true
   })
-  mainWindow.openDevTools()
+  // mainWindow.openDevTools()
   mainWindow.setIcon(__dirname + "/src/icon/icon.ico")
   const contents = mainWindow.webContents
   contents.on('media-paused', (e, a) => {
@@ -74,6 +74,7 @@ ipcMain.on('openMkPlaylistWindow', (event, args) => {
       resizable: false,
       useContentSize: true
     })
+    // mkPlaylistWindow.openDevTools()
     mkPlaylistWindow.setMenu(null)
     mkPlaylistWindow.loadFile('./src/renderer/mkPlaylist/index.html')
     mkPlaylistWindow.on('close', () => {
