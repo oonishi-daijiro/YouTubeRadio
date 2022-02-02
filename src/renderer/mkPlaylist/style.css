@@ -69,7 +69,7 @@ body {
 
 .jumpButton:hover{
   color: #585858;
-  font-size: 120%;
+  /* font-size: 120%; */
 }
 
 table{
@@ -201,4 +201,5 @@ table{
   color: #ffffff;
   transition: all 200ms ease;
   cursor: pointer;
+  font-size: 90%;
 }

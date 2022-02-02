@@ -130,34 +130,6 @@ overflow: hidden;
   }
 }
 
-@keyframes barb {
-  0% {
-    transform: scaleY(0.4);
-  }
-
-  50% {
-    transform: scaley(1.5);
-  }
-
-  100% {
-    transform: scaley(0.4);
-  }
-}
-
-@keyframes barc {
-  0% {
-    transform: scaleY(0.7);
-  }
-
-  50% {
-    transform: scaley(1.8);
-  }
-
-  100% {
-    transform: scaley(0.4);
-  }
-}
-
 .pause {
   animation-play-state: paused;
 }
