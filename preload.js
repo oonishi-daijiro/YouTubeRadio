@@ -15,14 +15,8 @@ contextBridge.exposeInMainWorld(
       send: (channel, data) => {
         ipcRenderer.send(channel, data);
       },
-      storeIdList: (data) => {
-        ipcRenderer.send('storeIdList', data);
-      },
-      submitIdListToPlayer: (data) => {
-        ipcRenderer.send('submitIdListToPlayer', data);
-      },
-      getVideoIDandTitle: (data) => {
-        ipcRenderer.send('getVideoIDandTitle', data)
+      submitIdListToPlayer: (list) => {
+        ipcRenderer.send('submitIdListToPlayer', list);
       },
       closeMkplay: () => {
         ipcRenderer.send('closeMkplay');
@@ -33,9 +27,6 @@ contextBridge.exposeInMainWorld(
       minimizeWindow: (data) => {
         ipcRenderer.send('minimize', data)
       },
-      requestYTvideoHtml: (id) => {
-        ipcRenderer.send('requestYTvideoHtml', id)
-      },
       openMkPlaylistWindow: (data) => {
         ipcRenderer.send('openMkPlaylistWindow', data)
       },
@@ -45,8 +36,14 @@ contextBridge.exposeInMainWorld(
       storeTitleList: (data) => {
         ipcRenderer.send('storeTitleList', data)
       },
-      getTitleAndStore: (data) => {
-        ipcRenderer.send('getTitleAndStore', data)
+      applyIDToConfig: (id) => {
+        ipcRenderer.send('applyIDToConfig', id)
+      },
+      getVideoIDandTitle: () => {
+        ipcRenderer.send('getVideoIDandTitle')
+      },
+      jumpVideo: (index) => {
+        ipcRenderer.send('jumpVideo', index)
       }
     },
     url: url,

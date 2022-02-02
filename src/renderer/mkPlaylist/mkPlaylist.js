@@ -1,182 +1,207 @@
-const cancelButton = document.getElementById('cancel')
 const ipcRenderer = window.api.ipcRenderer
-const urlTable = document.getElementById('urls')
-const url = window.api.url // <=require('url')
-const getTitleOnYoutube = window.api.getTitleOnYoutube
-
-function getListOfIDandTitleFromStore(callback) {
-  (async () => {
-    const list = await new Promise((resolve, reject) => {
-      ipcRenderer.getVideoIDandTitle('')
+const url = window.api.url
+const config = {
+  set: (idList) => {
+    ipcRenderer.storeIdList(idList)
+  },
+  get: async () => {
+    return await new Promise((resolve, reject) => {
+      window.api.ipcRenderer.getVideoIDandTitle()
       ipcRenderer.once('replyUrlList', (event, args) => {
-        resolve(args)
+        resolve({
+          IDlist: args.IDlist.list,
+          TitleList: args.titleList.list
+        })
       })
     })
-    return list
-  })().then((replyData) => {
-    callback(replyData)
-  })
+  }
 }
 
-window.onload = () => { // when this window has opened, get data from config.json
-  const tableDOM = document.getElementById('urls')
-  getListOfIDandTitleFromStore((list) => {
-    const idListArray = Array.from(list.IDlist)
-    if (idListArray.length === 0) {
-      addURLinputRow()
-      return
-    }
-    idListArray.forEach(element => {
-      addURLinputRow()
-    })
-    const rows = Array.from(tableDOM.rows)
-    rows.forEach((element, index) => {
-      if (idListArray[index] === null) {
-        return
-      }
-      element.childNodes[0].childNodes[1].value = `https://www.youtube.com/watch?v=${idListArray[index]}`
-    })
-    addTitleDisplay(list.titleList, tableDOM)
-  })
-}
-
-function htmlspecialchars(str) {
-  return (str + '').replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '\"')
-    .replace(/&#39;/g, '\'')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
-}
-
-function addTitleDisplay(titleList, inputURLTabale) {
-  Array.from(inputURLTabale.rows).forEach((e, index) => {
-    e.firstChild.style.display = "none"
+class urlField {
+  constructor() {
+    this.table = document.getElementById(urlField.tableID)
+    const tr = document.createElement('tr')
     const td = document.createElement('td')
-    const textArea = document.createElement('input')
-    const i = document.createElement('i')
-    textArea.value = htmlspecialchars(titleList[index])
-    textArea.style.fontStyle = 'italic'
-    textArea.style.color = '#585858'
-    if (titleList[index] === undefined) {
-      textArea.value = 'Loading....'
-    }
-    i.className = 'fas fa-times removeId'
-    i.addEventListener('click', (event) => {
-      removeRow(event)
+    const field = urlField.Field
+    const removeButton = urlField.RemoveButton
+    tr.className = 'URLfield-row'
+    td.className = "URLField-td"
+    this.tr = tr
+    this.td = td
+    this.field = field
+    this.removeButton = removeButton
+    td.appendChild(removeButton)
+    td.appendChild(field)
+    tr.appendChild(td)
+    this.table.appendChild(tr)
+    removeButton.addEventListener('click', () => {
+      this.remove()
     })
-    td.appendChild(i)
-    textArea.className = 'urlArea'
-    td.appendChild(textArea)
-    e.appendChild(td)
-    textArea.addEventListener('focus', (event) => {
+    urlField.fields.push(this)
+  }
+  getURL = () => {
+    const url = this.field.value
+    return url
+  }
+  setURL = (url) => {
+    this.field.value = url
+  }
+  get index() {
+    return urlField.fields.indexOf(this)
+  }
+  remove = () => {
+    this.tr.remove()
+    const index = this.index
+    urlField.fields.splice(index, 1)
+    if (urlField.fields.length === 0) {
+      new urlField()
+    }
+  }
+  static fields = []
+  static tableID = 'urls'
+  static get Field() {
+    const input = document.createElement('input')
+    input.type = "text"
+    input.className = "URLField"
+    input.placeholder = "YouTube URL"
+    input.spellcheck = false
+    return input
+  }
+  static get TitleDisplay() {
+    const input = document.createElement('input')
+    input.className = "title"
+    input.spellcheck = false
+    return input
+  }
+  static get JumpButton() {
+    const button = document.createElement('i')
+    button.className = 'fas fa-play jumpButton'
+    return button
+  }
+  static get RemoveButton() {
+    const button = document.createElement('i')
+    button.className = 'fas fa-times removeId'
+    return button
+  }
+}
+
+class titleDisplayAndURLField extends urlField {
+  constructor(initialize = {
+    id: "",
+    title: ""
+  }) {
+    super()
+    this.field.style.display = 'none'
+    this.field.value = `https://www.youtube.com/watch?v=${initialize.id}`
+    const jumpButton = urlField.JumpButton
+    const titleDisplay = urlField.TitleDisplay
+    titleDisplay.value = initialize.title
+    titleDisplay.addEventListener('focus', (event) => {
       event.stopPropagation()
-      event.target.parentNode.style.display = 'none'
-      event.target.parentNode.previousSibling.style.display = 'flex'
-      event.target.parentNode.previousSibling.childNodes[1].focus()
+      titleDisplay.style.display = 'none'
+      this.field.style.display = 'flex'
+      this.field.focus()
+    })
+    this.field.addEventListener('focusout', (event) => {
+      event.stopPropagation()
+      titleDisplay.style.display = 'flex'
+      this.field.style.display = 'none'
+    })
+    jumpButton.addEventListener('click', () => {
+      console.log(this.index)
+      jumpToThisIndex(this.index)
+      closeWindow()
+    })
+    this.td.appendChild(titleDisplay)
+    this.td.appendChild(jumpButton)
+  }
+}
+
+window.onload = () => {
+  config.get().then((data) => {
+    if (data.IDlist.length === 0) {
+      new urlField()
+      return
+    }
+    data.IDlist.forEach((id, index) => {
+      if (data.TitleList[index] === undefined) {
+        data.titleList[index] = 'Loading'
+      }
+      new titleDisplayAndURLField({
+        id: id,
+        title: data.TitleList[index]
+      })
     })
   })
 }
 
-const submit = document.getElementById('submit')
-
-submit.addEventListener('click', () => {
-  const newIDList = parseUrls(getURLFromTable())
-  getListOfIDandTitleFromStore(list => {
-    if (newIDList.length === 0) {
-      ipcRenderer.storeTitleList([])
-      submitIDs([])
-      ipcRenderer.closeMkplay()
-      return
-    }
-    ipcRenderer.getTitleAndStore(newIDList)
-    submitIDs(newIDList)
-    ipcRenderer.closeMkplay()
+function parseURLtoID() {
+  this.forEach((i, index) => {
+    const u = url.parse(i, true)
+    this[index] = u.query.v === undefined ? "" : u.query.v
   })
-})
-
-function submitIDs(newIDList) {
-  ipcRenderer.submitIdListToPlayer(newIDList)
-  ipcRenderer.storeIdList(newIDList)
 }
 
-cancelButton.addEventListener('click', (event) => {
-  const tableContent = document.getElementById('tableContents').rows
-  Array.from(tableContent).forEach(element => {
-    if (tableContent.length === 1) { // dom tbody element
-      return
-    }
-    if (element.childNodes[0].childNodes[1].value === '') {
-      element.remove()
+function getURLlist() {
+  const list = []
+  urlField.fields.forEach(field => {
+    const url = field.getURL()
+    list.push(url)
+  })
+  return list
+}
+
+function removeInvalidURL(list) {
+  const newURLList = []
+  list.forEach((i, index) => {
+    const u = url.parse(i, true)
+    if (u.hostname === 'www.youtube.com' && u.query.v.length === 11 && i !== "") { // the condition of valid url
+      newURLList.push(i)
     }
   })
+  return newURLList
+}
+
+function applyIDToConfig() {
+  ipcRenderer.applyIDToConfig(this)
+}
+
+function applyToPlayer() {
+  ipcRenderer.submitIdListToPlayer(this)
+}
+
+function closeWindow() {
   ipcRenderer.closeMkplay()
+}
+
+document.getElementById('addUrlButton').addEventListener('click', () => {
+  const r = new urlField()
+  document.getElementById('scroller').scrollTo(0, r.tr.offsetTop)
 })
 
-const addUrlButton = document.getElementById('addIco')
+function jumpToThisIndex(index = 0) {
+  ipcRenderer.jumpVideo(index)
+}
 
-addUrlButton.addEventListener('click', () => {
-  const table = addURLinputRow()
-  if (table.childNodes.length <= 5) {
-    return
-  }
-  const leastRowPosition = table.childNodes[table.childNodes.length - 1].offsetTop
-  document.getElementById('scroller').scrollTo(0, leastRowPosition)
+function submit() {
+  const list = getURLlist()
+  const validURLlist = removeInvalidURL(list)
+  parseURLtoID.apply(validURLlist)
+  applyToPlayer.apply(validURLlist)
+  applyIDToConfig.apply(validURLlist)
+}
+
+document.getElementById('submit').addEventListener('click', () => {
+  submit()
+  closeWindow()
 })
 
-function parseUrls(urlList) {
-  const parsedList = urlList.filter(i => {
-    const u = url.parse(i, true)
-    return u.hostname === 'www.youtube.com' && u.query.v.length === 11 && i !== ""
-  }).map((i) => {
-    const u = url.parse(i, true)
-    return u.query.v
-  })
-  return parsedList
-}
+document.getElementById('cancel').addEventListener('click', () => {
+  closeWindow()
+})
 
-function addURLinputRow() {
-  const tableContent = document.getElementById('tableContents')
-  const tr = document.createElement('tr')
-  const td = document.createElement('td')
-  const textArea = document.createElement('input')
-  const i = document.createElement('i')
-  i.className = 'fas fa-times removeId'
-  i.addEventListener('click', (event) => {
-    removeRow(event)
+function t() {
+  urlField.fields.forEach(e => {
+    console.log(e.getURL())
   })
-  td.appendChild(i)
-  textArea.className = 'urlArea'
-  textArea.placeholder = 'YouTube URL'
-  textArea.addEventListener('focusout', (event) => {
-    if (event.target.parentNode.nextSibling === null) {
-      return
-    }
-    event.stopPropagation()
-    event.target.parentNode.style.display = 'none'
-    event.target.parentNode.nextSibling.style.display = 'flex'
-  })
-  tableContent
-    .appendChild(tr)
-    .appendChild(td)
-    .appendChild(textArea)
-  return tableContent
-}
-
-function getURLFromTable() {
-  const urlList = []
-  const tableContent = document.getElementById('urls')
-  const rows = Array.from(tableContent.rows)
-  rows.forEach(element => {
-    urlList.push(element.childNodes[0].childNodes[1].value)
-  })
-  return urlList
-}
-
-function removeRow(event) {
-  if (event.target.parentNode.parentNode.parentNode.childNodes.length === 2) {
-    event.target.parentNode.parentNode.remove()
-    addURLinputRow()
-    return
-  }
-  event.target.parentNode.parentNode.remove()
 }

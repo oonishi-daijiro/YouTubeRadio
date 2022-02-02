@@ -10,6 +10,7 @@ const store = new electronStore({
 let mainWindow = null
 let mkPlaylistWindow = null
 const getLeastTitleList = require('./src/getHtmlTitle/main.js');
+app.disableHardwareAcceleration()
 
 app.on('ready', () => {
   if (!store.get('urlList')) {
@@ -83,10 +84,6 @@ ipcMain.on('openMkPlaylistWindow', (event, args) => {
   }
 })
 
-function isConnectedAtInternet() {
-
-}
-
 ipcMain.on('closeMkplay', (event, args) => {
   mkPlaylistWindow.close()
 })
@@ -111,42 +108,37 @@ ipcMain.on('submitIdListToPlayer', (event, args) => { // should receive from mak
   mainWindow.send('applyNewPlaylist', args)
 })
 
-ipcMain.on('getVideoIDandTitle', (event, args) => {
-  const IDlist = store.get('urlList', {
-    list: []
-  })
-  const titleList = store.get('videoTitleList', {
-    list: []
-  })
-  event.sender.send('replyUrlList', {
-    IDlist: IDlist.list,
-    titleList: titleList.list
-  })
+ipcMain.on('jumpVideo', (evemt, index) => {
+  mainWindow.send('jumpVideo', index)
 })
 
-ipcMain.on('storeIdList', (event, args) => {
-  store.set('urlList', {
-    list: args
-  })
-})
-
-ipcMain.on('storeTitleList', (event, args) => {
-  store.set('videoTitleList', {
-    list: args
-  })
-})
-
-ipcMain.on('getTitleAndStore', (event, args) => {
+ipcMain.on('getVideoIDandTitle', (evemt, arg) => {
   const currentIDlist = store.get('urlList', {
     list: []
   })
   const currentTitleList = store.get('videoTitleList', {
     list: []
   })
-  const titleList = getLeastTitleList(args, currentIDlist.list, currentTitleList.list)
-  titleList.then(list => {
+  evemt.sender.send('replyUrlList', {
+    titleList: currentTitleList,
+    IDlist: currentIDlist
+  })
+})
+
+ipcMain.on('applyIDToConfig', (event, leastIDlist) => {
+  const currentIDlist = store.get('videoTitleList', {
+    list: []
+  })
+  const currentTitleList = store.get('urlList', {
+    list: []
+  })
+  store.set('urlList', {
+    list: leastIDlist
+  })
+  const leastTitleList = getLeastTitleList(leastIDlist, currentIDlist.list, currentTitleList.list)
+  leastTitleList.then(titleList => {
     store.set('videoTitleList', {
-      list: list
+      list: titleList
     })
   })
 })

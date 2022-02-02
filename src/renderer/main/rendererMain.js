@@ -34,71 +34,72 @@ function getListOfIDandTitleFromStore(callback) {
 
 function YTonPlayerReady(event) {
   getListOfIDandTitleFromStore((list) => {
-    const idListArray = Array.from(list.IDlist)
+    const idListArray = Array.from(list.IDlist.list)
     if (idListArray.length === 0) return
-    player.loadPlaylist({
-      listType: "playlist",
+    applyToIframePlayer({
       playlist: idListArray
     })
-    player.setVolume(50)
-    player.setLoop(true)
   })
 }
 
-function removeInvalidIDandStoreAndApplyNewPlaylist() {
-  const currentList = player.getPlaylist()
-  const currentIndex = player.getPlaylistIndex()
-  if (currentIndex > currentList.length - 1) {
-    currentIndex = 0
-  }
-  currentList.splice(currentIndex, 1)
-  player.loadPlaylist({
+function applyToIframePlayer(
+  config = {
     listType: "playlist",
-    playlist: currentList,
-    index: currentIndex
-  })
+    playlist: [],
+    index: 0,
+    startSeconds: 0
+  }
+) {
+  player.loadPlaylist(config)
   player.setLoop(true)
   player.setVolume(50)
-  if (currentList === undefined) currentList = []
-  ipcRenderer.storeIdList(currentList)
-  getListOfIDandTitleFromStore(list => {
-    const currentTitleList = list.titleList
-    currentTitleList.splice(currentIndex, 1)
-    ipcRenderer.storeTitleList(currentTitleList)
-  })
 }
 
+function storeToConfig(data = []) {
+  ipcRenderer.applyIDToConfig(data)
+}
 
-
+function removeInvalidID() {
+  let currentIndex = player.getPlaylistIndex()
+  this.splice(currentIndex, 1)
+}
 
 function YTonPlayerError(event) {
   if (event.data === 150) {
+    console.log("error 150")
     ipcRenderer.sendErrorOfPlaying({
       data: event.data,
       videoUrl: player.getVideoUrl(),
-      errorBody: "動画の所有者が、埋め込み動画プレーヤーでの再生を許可していないため再生できません\nクリックで確認"
+      errorBody: "動画の所有者が、埋め込み動画プレーヤーでの再生を許可していないため再生できませんクリックで確認"
     })
-    removeInvalidIDandStoreAndApplyNewPlaylist()
+    const currentIndex = player.getPlaylistIndex() > player.getPlaylist().length - 1 ?
+      0 :
+      player.getPlaylistIndex()
+
+    const currentPlaylist = player.getPlaylist()
+    removeInvalidID.apply(currentPlaylist)
+    applyToIframePlayer({
+      playlist: currentPlaylist,
+      index: currentIndex
+    })
+    player.playVideo()
+    storeToConfig(currentPlaylist)
   }
 }
 
-//if the current index is 0 and applies a new playlist that has unallowed video play on iframe at first index, the youtube iframe API shows an error and can not use any of it. the way to fix them is to remove the invalid IDs and apply again.
+// ### YouTube Iframe API issue ###
+// if apply unplayable video at the current index of player, the player will not work.
 
-ipcRenderer.on('applyNewPlaylist', (event, args) => {
-  const videoIdList = args.filter(() => true)
+ipcRenderer.on('applyNewPlaylist', (event, idList) => {
+  const videoIdList = Array.from(idList)
   const currentVideoIDList = player.getPlaylist()
   if (currentVideoIDList === null) { // when the player didn't set the playlist
-    player.loadPlaylist({
-      listType: "playlist",
+    applyToIframePlayer({
       playlist: videoIdList
     })
     return
   } else if (videoIdList.length === 0) { // when applyed the playlist that has no value []
-    player.loadPlaylist({
-      listType: "playlist",
-      playlist: []
-    })
-    ipcRenderer.storeIdList([])
+    applyToIframePlayer()
     return
   }
   let currentIndex = player.getPlaylistIndex()
@@ -113,15 +114,16 @@ ipcRenderer.on('applyNewPlaylist', (event, args) => {
     element.style.animationPlayState = 'running'
   })
 
-  player.loadPlaylist({
-    listType: "playlist",
+  applyToIframePlayer({
     playlist: videoIdList,
     index: currentIndex,
-    startSeconds: currentTime,
+    startSeconds: currentTime
   })
-  player.setLoop(true)
-  player.seekTo(currentTime, true)
-  player.setVolume(50)
+})
+
+ipcRenderer.on('jumpVideo', (event, index) => {
+  console.log("index is ", index)
+  player.playVideoAt(index)
 })
 
 function YTonStateChange(event) {}
@@ -140,25 +142,28 @@ getUrl.addEventListener('click', () => {
 const pauseButton = document.getElementById('pause')
 
 pauseButton.addEventListener('click', () => {
-  pauseButton.className === "fas fa-pause" ? (() => {
+  if (player.getPlaylist() === null) { // when the player didnt has any playlist
+    return
+  }
+  if (pauseButton.className === "fas fa-pause") {
     player.pauseVideo()
     pauseButton.className = "fas fa-play"
     soundBars.forEach(element => {
       element.style.animationPlayState = 'paused'
     });
-  })() : (() => {
+  } else {
     player.playVideo()
     pauseButton.className = "fas fa-pause"
     soundBars.forEach(element => {
       element.style.animationPlayState = 'running'
     });
-  })()
+  }
 }, false)
 
 const previousVideo = document.getElementById('previousVideo')
 
-previousVideo.addEventListener('click', () => {
-  if (!player.getPlaylist().length) {
+previousVideo.addEventListener('click', () => { //when the player didnt has any playlist
+  if (player.getPlaylist() === null) {
     return
   }
   player.previousVideo()
@@ -166,8 +171,8 @@ previousVideo.addEventListener('click', () => {
 
 const nextVideo = document.getElementById('nextVideo')
 
-nextVideo.addEventListener('click', () => {
-  if (!player.getPlaylist().length) {
+nextVideo.addEventListener('click', () => { //when the player didnt has any playlist
+  if (player.getPlaylist() === null) {
     return
   }
   player.nextVideo()
