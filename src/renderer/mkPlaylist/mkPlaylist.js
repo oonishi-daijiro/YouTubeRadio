@@ -17,6 +17,14 @@ const config = {
   }
 }
 
+function htmlspecialchars(str) {
+  return (str + '').replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '\"')
+    .replace(/&#39;/g, '\'')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
 class urlField {
   constructor() {
     this.table = document.getElementById(urlField.tableID)
@@ -95,7 +103,7 @@ class titleDisplayAndURLField extends urlField {
     this.field.value = `https://www.youtube.com/watch?v=${initialize.id}`
     const jumpButton = urlField.JumpButton
     const titleDisplay = urlField.TitleDisplay
-    titleDisplay.value = initialize.title
+    titleDisplay.value = htmlspecialchars(initialize.title)
     titleDisplay.addEventListener('focus', (event) => {
       event.stopPropagation()
       titleDisplay.style.display = 'none'
@@ -124,12 +132,13 @@ window.onload = () => {
       return
     }
     data.IDlist.forEach((id, index) => {
+      let title = data.TitleList[index]
       if (data.TitleList[index] === undefined) {
-        data.titleList[index] = 'Loading'
+        title = 'Loading.....'
       }
       new titleDisplayAndURLField({
         id: id,
-        title: data.TitleList[index]
+        title: title
       })
     })
   })

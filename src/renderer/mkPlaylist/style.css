@@ -182,6 +182,8 @@ table{
   color: #585858;
   height: 100%;
   cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .URLField-td{

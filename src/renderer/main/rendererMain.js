@@ -38,6 +38,8 @@ function YTonPlayerReady(event) {
     if (idListArray.length === 0) return
     applyToIframePlayer({
       playlist: idListArray
+    }, {
+      volume: 50
     })
   })
 }
@@ -48,11 +50,14 @@ function applyToIframePlayer(
     playlist: [],
     index: 0,
     startSeconds: 0
-  }
-) {
+  }, optional = {
+    volume: -1
+  }) {
   player.loadPlaylist(config)
   player.setLoop(true)
-  player.setVolume(50)
+  if (optional.volume > 0) {
+    player.setVolume(optional.volume)
+  }
 }
 
 function storeToConfig(data = []) {
@@ -122,8 +127,8 @@ ipcRenderer.on('applyNewPlaylist', (event, idList) => {
 })
 
 ipcRenderer.on('jumpVideo', (event, index) => {
-  console.log("index is ", index)
   player.playVideoAt(index)
+  player.seekTo(0)
 })
 
 function YTonStateChange(event) {}

@@ -126,10 +126,10 @@ ipcMain.on('getVideoIDandTitle', (evemt, arg) => {
 })
 
 ipcMain.on('applyIDToConfig', (event, leastIDlist) => {
-  const currentIDlist = store.get('videoTitleList', {
+  const currentIDlist = store.get('urlList', {
     list: []
   })
-  const currentTitleList = store.get('urlList', {
+  const currentTitleList = store.get('videoTitleList', {
     list: []
   })
   store.set('urlList', {

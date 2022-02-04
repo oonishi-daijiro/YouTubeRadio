@@ -25,6 +25,7 @@ overflow: hidden;
 
 #player{
   margin-top: -69px;
+  user-select: none;
 }
 
 #interface {
