@@ -208,9 +208,3 @@ document.getElementById('submit').addEventListener('click', () => {
 document.getElementById('cancel').addEventListener('click', () => {
   closeWindow()
 })
-
-function t() {
-  urlField.fields.forEach(e => {
-    console.log(e.getURL())
-  })
-}

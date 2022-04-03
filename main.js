@@ -12,6 +12,52 @@ let mkPlaylistWindow = null
 const getLeastTitleList = require('./src/getHtmlTitle/main.js');
 app.disableHardwareAcceleration()
 
+function getThumbbarIconPath(iconName) {
+  return __dirname + "/thumbarButtonIcons/forDarkmode/" + iconName
+}
+
+const thumbBarButtons = {
+  play: {
+    tooltip: "Play",
+    icon: getThumbbarIconPath("play.png"),
+    click: () => {
+      mainWindow.send('playVideo')
+      mainWindow.setThumbarButtons([
+        thumbBarButtons.previousVideo,
+        thumbBarButtons.pause,
+        thumbBarButtons.nextVideo
+      ])
+    }
+  },
+  pause: {
+    tooltip: "Pause",
+    icon: getThumbbarIconPath("pause.png"),
+    click: () => {
+      mainWindow.send('pauseVideo')
+      mainWindow.setThumbarButtons([
+        thumbBarButtons.previousVideo,
+        thumbBarButtons.play,
+        thumbBarButtons.nextVideo
+      ])
+    }
+  },
+  previousVideo: {
+    tooltip: "Previous video",
+    icon: getThumbbarIconPath("previous.png"),
+    click: () => {
+      mainWindow.send('previousVideo')
+    }
+  },
+  nextVideo: {
+    tooltip: "Next video",
+    icon: getThumbbarIconPath("next.png"),
+    click: () => {
+      mainWindow.send('nextVideo')
+    }
+  }
+}
+
+
 app.on('ready', () => {
   if (!store.get('urlList')) {
     store.set('urlList', {
@@ -54,6 +100,13 @@ app.on('ready', () => {
   ipcMain.on('minimize', () => {
     mainWindow.minimize()
   })
+  mainWindow.setThumbarButtons(
+    [
+      thumbBarButtons.previousVideo,
+      thumbBarButtons.pause,
+      thumbBarButtons.nextVideo
+    ]
+  )
 }) // app on
 
 
@@ -141,4 +194,24 @@ ipcMain.on('applyIDToConfig', (event, leastIDlist) => {
       list: titleList
     })
   })
+})
+
+ipcMain.on('videoPaused', () => {
+  mainWindow.setThumbarButtons(
+    [
+      thumbBarButtons.previousVideo,
+      thumbBarButtons.play,
+      thumbBarButtons.nextVideo
+    ]
+  )
+})
+
+ipcMain.on('videoPlayed', () => {
+  mainWindow.setThumbarButtons(
+    [
+      thumbBarButtons.previousVideo,
+      thumbBarButtons.pause,
+      thumbBarButtons.nextVideo
+    ]
+  )
 })

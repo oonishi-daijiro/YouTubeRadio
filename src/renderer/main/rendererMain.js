@@ -15,7 +15,7 @@ function onYouTubeIframeAPIReady() { // when youtube iframe api get ready, this 
       'onStateChange': YTonStateChange,
       'onError': YTonPlayerError
     }
-  });
+  })
 }
 
 function getListOfIDandTitleFromStore(callback) {
@@ -42,6 +42,22 @@ function YTonPlayerReady(event) {
       volume: 50
     })
   })
+}
+
+function pauseVideo() {
+  pauseButton.className = "fas fa-play"
+  soundBars.forEach(element => {
+    element.style.animationPlayState = 'paused'
+  });
+  player.pauseVideo()
+}
+
+function playVideo() {
+  pauseButton.className = "fas fa-pause"
+  soundBars.forEach(element => {
+    element.style.animationPlayState = 'running'
+  })
+  player.playVideo()
 }
 
 function applyToIframePlayer(
@@ -103,7 +119,7 @@ ipcRenderer.on('applyNewPlaylist', (event, idList) => {
       playlist: videoIdList
     })
     return
-  } else if (videoIdList.length === 0) { // when applyed the playlist that has no value []
+  } else if (videoIdList.length === 0) { // when applyed the playlist that has no value:[]
     applyToIframePlayer()
     return
   }
@@ -151,17 +167,11 @@ pauseButton.addEventListener('click', () => {
     return
   }
   if (pauseButton.className === "fas fa-pause") {
-    player.pauseVideo()
-    pauseButton.className = "fas fa-play"
-    soundBars.forEach(element => {
-      element.style.animationPlayState = 'paused'
-    });
+    pauseVideo();
+    ipcRenderer.videoPaused()
   } else {
-    player.playVideo()
-    pauseButton.className = "fas fa-pause"
-    soundBars.forEach(element => {
-      element.style.animationPlayState = 'running'
-    });
+    playVideo();
+    ipcRenderer.videoPlayed()
   }
 }, false)
 
@@ -249,7 +259,23 @@ ipcRenderer.on('playing', (e) => {
   pauseButton.className = "fas fa-pause"
   soundBars.forEach(element => {
     element.style.animationPlayState = 'running'
-  });
+  })
+})
+
+ipcRenderer.on('playVideo', () => {
+  playVideo()
+})
+
+ipcRenderer.on('pauseVideo', () => {
+  pauseVideo()
+})
+
+ipcRenderer.on('previousVideo', () => {
+  player.previousVideo()
+})
+
+ipcRenderer.on('nextVideo', () => {
+  player.nextVideo()
 })
 
 const close = document.getElementById('close_button')

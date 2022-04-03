@@ -44,6 +44,12 @@ contextBridge.exposeInMainWorld(
       },
       jumpVideo: (index) => {
         ipcRenderer.send('jumpVideo', index)
+      },
+      videoPaused: () => {
+        ipcRenderer.send('videoPaused')
+      },
+      videoPlayed: () => {
+        ipcRenderer.send('videoPlayed')
       }
     },
     url: url,
