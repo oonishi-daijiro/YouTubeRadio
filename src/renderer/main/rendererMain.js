@@ -272,10 +272,12 @@ ipcRenderer.on('pauseVideo', () => {
 
 ipcRenderer.on('previousVideo', () => {
   player.previousVideo()
+  ipcRenderer.videoPlayed()
 })
 
 ipcRenderer.on('nextVideo', () => {
   player.nextVideo()
+  ipcRenderer.videoPlayed()
 })
 
 const close = document.getElementById('close_button')
