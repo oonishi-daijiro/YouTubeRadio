@@ -142,11 +142,6 @@ ipcRenderer.on('applyNewPlaylist', (event, idList) => {
   })
 })
 
-ipcRenderer.on('jumpVideo', (event, index) => {
-  player.playVideoAt(index)
-  player.seekTo(0)
-})
-
 function YTonStateChange(event) {}
 
 const soundBars = []
@@ -277,6 +272,12 @@ ipcRenderer.on('previousVideo', () => {
 
 ipcRenderer.on('nextVideo', () => {
   player.nextVideo()
+  ipcRenderer.videoPlayed()
+})
+
+ipcRenderer.on('jumpVideo', (event, index) => {
+  player.playVideoAt(index)
+  player.seekTo(0)
   ipcRenderer.videoPlayed()
 })
 
